@@ -1,4 +1,4 @@
-// 📁 camera/CameraScreen.kt
+package com.example.luontopeli.camera
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +56,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.luontopeli.viewmodel.CameraViewModel
+import com.example.luontopeli.ml.ClassificationResult
 
 import java.io.File
 
@@ -87,6 +90,8 @@ fun CameraScreen(viewModel: CameraViewModel = viewModel()) {
 
     val capturedImagePath by viewModel.capturedImagePath.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val classificationResult by viewModel.classificationResult.collectAsState()
+    val comment by viewModel.comment.collectAsState()
 
     if (!hasCameraPermission) {
         // Lupanäkymä
@@ -107,6 +112,9 @@ fun CameraScreen(viewModel: CameraViewModel = viewModel()) {
     @Composable
     fun CapturedImageView(
         imagePath: String,
+        result: ClassificationResult?,
+        comment: String,
+        onCommentChange: (String) -> Unit,
         onRetake: () -> Unit,
         onSave: () -> Unit
     ) {
@@ -122,30 +130,51 @@ fun CameraScreen(viewModel: CameraViewModel = viewModel()) {
                     .background(Color.Black)
             )
 
-            // Toimintopainikkeet
-            Row(
+            // Tunnistustulos ja kommenttikenttä
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedButton(onClick = onRetake) {
-                    Icon(Icons.Default.Refresh, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Ota uudelleen")
+                result?.let {
+                    ClassificationResultCard(result = it)
                 }
-                Button(onClick = onSave) {
-                    Icon(Icons.Default.Save, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Tallenna löytö")
+
+                OutlinedTextField(
+                    value = comment,
+                    onValueChange = onCommentChange,
+                    label = { Text("Lisää kommentti") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
+                )
+
+                // Toimintopainikkeet
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    OutlinedButton(
+                        onClick = onRetake,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Refresh, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Uusi kuva")
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Button(
+                        onClick = onSave,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Save, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Tallenna")
+                    }
                 }
             }
         }
     }
-
-
-
-
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Kameran esikatselu (tai otettu kuva)
@@ -203,6 +232,9 @@ fun CameraScreen(viewModel: CameraViewModel = viewModel()) {
             // Näytetään otettu kuva + toimintopainikkeet
             CapturedImageView(
                 imagePath = capturedImagePath!!,
+                result = classificationResult,
+                comment = comment,
+                onCommentChange = { viewModel.onCommentChange(it) },
                 onRetake = { viewModel.clearCapturedImage() },
                 onSave = { viewModel.saveCurrentSpot() }
             )
@@ -213,7 +245,7 @@ fun CameraScreen(viewModel: CameraViewModel = viewModel()) {
 @Composable
 fun ClassificationResultCard(result: ClassificationResult) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = when (result) {
                 is ClassificationResult.Success ->
@@ -225,7 +257,7 @@ fun ClassificationResultCard(result: ClassificationResult) {
             }
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
             when (result) {
                 is ClassificationResult.Success -> {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -249,13 +281,13 @@ fun ClassificationResultCard(result: ClassificationResult) {
                     Text(
                         text = result.label,
                         style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
 
                     // Varmuuspalkki
                     LinearProgressIndicator(
-                        progress = result.confidence,
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                        progress = { result.confidence },
+                        modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
                         color = when {
                             result.confidence > 0.8f -> Color(0xFF2E7D32)
                             result.confidence > 0.6f -> Color(0xFFF57C00)

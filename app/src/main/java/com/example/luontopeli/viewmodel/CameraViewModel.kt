@@ -1,3 +1,5 @@
+package com.example.luontopeli.viewmodel
+
 import android.app.Application
 import android.content.Context
 import android.net.Uri
@@ -12,6 +14,8 @@ import com.example.luontopeli.data.remote.firebase.AuthManager
 import com.example.luontopeli.data.remote.firebase.FirestoreManager
 import com.example.luontopeli.data.remote.firebase.StorageManager
 import com.example.luontopeli.data.repository.NatureSpotRepository
+import com.example.luontopeli.ml.ClassificationResult
+import com.example.luontopeli.ml.PlantClassifier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,8 +24,6 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-// 📁 viewmodel/CameraViewModel.kt
 
 /**
  * ViewModel kameranäkymälle (CameraScreen).
@@ -48,8 +50,15 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _comment = MutableStateFlow("")
+    val comment: StateFlow<String> = _comment.asStateFlow()
+
     var currentLatitude: Double = 0.0
     var currentLongitude: Double = 0.0
+
+    fun onCommentChange(newComment: String) {
+        _comment.value = newComment
+    }
 
     fun takePhoto(context: Context, imageCapture: ImageCapture) {
         _isLoading.value = true
@@ -103,7 +112,8 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                 longitude = currentLongitude,
                 imageLocalPath = imagePath,
                 plantLabel = (result as? ClassificationResult.Success)?.label,
-                confidence = (result as? ClassificationResult.Success)?.confidence
+                confidence = (result as? ClassificationResult.Success)?.confidence,
+                comment = _comment.value.takeIf { it.isNotBlank() }
             )
             repository.insertSpot(spot)
             clearCapturedImage()
@@ -124,5 +134,6 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     fun clearCapturedImage() {
         _capturedImagePath.value = null
         _classificationResult.value = null
+        _comment.value = ""
     }
 }

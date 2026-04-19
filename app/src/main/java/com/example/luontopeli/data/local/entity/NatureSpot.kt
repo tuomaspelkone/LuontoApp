@@ -1,4 +1,3 @@
-
 package com.example.luontopeli.data.local.entity
 
 import androidx.room.Entity
@@ -35,6 +34,9 @@ data class NatureSpot(
     val plantLabel: String? = null,
     /** ML Kit -tunnistuksen luottamusarvo (0.0–1.0) */
     val confidence: Float? = null,
+
+    /** Käyttäjän lisäämä kommentti tai lisätieto */
+    val comment: String? = null,
 
     /** Firebase Auth -käyttäjätunniste (UID) */
     val userId: String? = null,

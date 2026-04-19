@@ -38,6 +38,7 @@ class FirestoreManager {
                 "imageFirebaseUrl" to spot.imageFirebaseUrl,
                 "plantLabel" to spot.plantLabel,
                 "confidence" to spot.confidence,
+                "comment" to spot.comment,
                 "userId" to spot.userId,
                 "timestamp" to spot.timestamp,
                 "synced" to true
@@ -67,6 +68,7 @@ class FirestoreManager {
                         imageFirebaseUrl = doc.getString("imageFirebaseUrl"),
                         plantLabel = doc.getString("plantLabel"),
                         confidence = doc.getDouble("confidence")?.toFloat(),
+                        comment = doc.getString("comment"),
                         userId = doc.getString("userId"),
                         timestamp = doc.getLong("timestamp") ?: 0L,
                         synced = true

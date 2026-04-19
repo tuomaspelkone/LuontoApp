@@ -22,7 +22,7 @@ import com.example.luontopeli.data.local.entity.WalkSession
         NatureSpot::class,   // Luontolöydöt (viikko 4)
         WalkSession::class   // Kävelysessiot (viikko 2)
     ],
-    version = 2,             // Kasvatettu 1→2 koska lisättiin NatureSpot
+    version = 3,             // Kasvatettu 2→3 koska lisättiin comment-kenttä NatureSpotiin
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
